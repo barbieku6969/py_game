@@ -14,26 +14,30 @@ pygame.display.set_caption("Collision Detector")
 # Clock
 clock = pygame.time.Clock()
 
+# Grid
+TILE = 20
+ROWS = COLS = WIDTH // TILE
+
 # Square settings
-square_size = 50
-square_x = WIDTH // 2
-square_y = HEIGHT // 2
-speed = 5
+posisjon = [
+        [WIDTH // 2, HEIGHT // 2]
+        ]
+square_size = 20
+dir_x, dir_y = 0, 0
+speed = 20
 
-circle_X =  random.randint(0, WIDTH)
-circle_Y =  random.randint(0, HEIGHT)
 
-kropp_Y = square_y - 10
-kropp_x = square_x 
+circle_X =  random.randint(0, WIDTH // TILE - 1) * TILE
+circle_Y =  random.randint(0, HEIGHT // TILE - 1) * TILE
 
-kropp_x = -1000
-kropp_Y = -1000
 
-kroppListe = []
-follow = False
+# Simple maze layout (1 = wall, 0 = path)
 
 
 
+BLACK = (0, 0, 0)
+WHITE = (200, 200, 200)
+BG = (30, 30, 30)
 
 
 
@@ -43,51 +47,68 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-   
-    eple = pygame.Rect(circle_X, circle_Y ,20,20)
-    slange = pygame.Rect(square_x, square_y, square_size, square_size)
-    kropp  = pygame.Rect(kropp_x - 10, kropp_Y, 50, 50)
-    # Key presses
+    screen.fill(BG)
+    for x in range(0, WIDTH, TILE):
+        for y in range(0, HEIGHT, TILE):
+            rect = pygame.Rect(x, y, TILE, TILE)
+            pygame.draw.rect(screen, WHITE, rect, 1)
+
+
+
+    # Check collision with all snake segments
+    colliding = False
+    for segment in posisjon:
+        slange = pygame.Rect(segment[0], segment[1], square_size, square_size)
+        eple = pygame.Rect(circle_X, circle_Y ,20,20)
+        if slange.colliderect(eple):
+            colliding = True
+            break
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
-        square_x -= speed
+        dir_x = -1
+        dir_y = 0
     if keys[pygame.K_RIGHT]:
-        square_x += speed
+        dir_x = 1
+        dir_y = 0
     if keys[pygame.K_UP]:
-        square_y -= speed
+        dir_y = -1
+        dir_x = 0
     if keys[pygame.K_DOWN]:
-        square_y += speed
+        dir_y = 1
+        dir_x = 0
 
+    posisjon[0][0] += dir_x * speed
+    posisjon[0][1] += dir_y * speed
+    # Move each body segment to follow the one before it
+    for i in range(len(posisjon) - 1, 0, -1):
+        posisjon[i][0] = posisjon[i-1][0]
+        posisjon[i][1] = posisjon[i-1][1]
     # Keep square on screen
-    square_x = max(0, min(WIDTH - square_size, square_x))
-    square_y = max(0, min(HEIGHT - square_size, square_y))
+    posisjon[0][0] = max(0, min(WIDTH - square_size, posisjon[0][0]))
+    posisjon[0][1] = max(0, min(HEIGHT - square_size, posisjon[0][1]))
 
-    # Drawing
-    screen.fill((30, 30, 30))  # background
-    pygame.draw.rect(
-        screen,
-        (0, 200, 255),
-        slange
-    )
-    pygame.draw.rect(screen, (255, 0, 0), kropp)
-
+    # Drawing - draw all snake segments
+    for segment in posisjon:
+        pygame.draw.rect(
+            screen,
+            (0, 200, 255),
+            pygame.Rect(segment[0], segment[1], square_size, square_size)
+        )
 
     pygame.draw.rect( screen, (255, 100, 0),eple)
 
-    colliding = slange.colliderect(eple)
     # Text
     if (colliding):
-        circle_X =  random.randint(0, WIDTH)
-        circle_Y =  random.randint(0, HEIGHT)
-        follow = True
+        circle_X =  random.randint(0, WIDTH // TILE - 1) * TILE
+        circle_Y =  random.randint(0, HEIGHT // TILE - 1) * TILE
+        # Add new segment to snake (duplicate the last segment)
+        posisjon.append(posisjon[-1][:])
         
-
-    if (follow):
-        kropp_Y = square_y 
-        kropp_x = square_x -20
+        
+        
 
 
 
 
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(10)
