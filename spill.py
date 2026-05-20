@@ -144,7 +144,7 @@ def game_loop():
     sys.exit()
 
 
-if __name__ == "__main__":
-    reset_game()  # Sett spillet til startverdier
-    main_menu()  # Vis menyen først
-    game_loop()  # Start selve spillet
+
+reset_game()  # Sett spillet til startverdier
+main_menu()  # Vis menyen først
+game_loop()  # Start selve spillet
