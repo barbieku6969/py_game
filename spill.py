@@ -1,114 +1,150 @@
-import pygame
-import sys
-import random
+﻿import pygame  # Import pygame for game graphics and input handling
+import sys  # Import sys to exit the program cleanly
+import random  # Import random to place the apple at a random position
 
 # Initialize pygame
 pygame.init()
 
-# Screen settings
+# Window settings
 WIDTH, HEIGHT = 600, 400
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Moving Square")
-pygame.display.set_caption("Collision Detector")
+screen = pygame.display.set_mode((WIDTH, HEIGHT))  # Lag vinduet
+pygame.display.set_caption("Moving Square")  # Gi vinduet navn
 
-# Clock
+# Bruk klokke for å styre bildefrekvens
 clock = pygame.time.Clock()
 
-# Grid
+# Rutenettinnstillinger
 TILE = 20
-ROWS = COLS = WIDTH // TILE
+ROWS = COLS = WIDTH // TILE  # Antall ruter på hver akse
 
-# Square settings
-posisjon = [
-        [WIDTH // 2, HEIGHT // 2]
-        ]
-square_size = 20
-dir_x, dir_y = 0, 0
-speed = 20
+# Slangeinnstillinger
+posisjon = [[WIDTH // 2, HEIGHT // 2]]  # Start på midten
+square_size = 20  # Størrelsen på slangen og eplet
 
+dir_x, dir_y = 0, 0  # Start uten bevegelse
+speed = TILE  # Flytt én rute per oppdatering
 
-circle_X =  random.randint(0, WIDTH // TILE - 1) * TILE
-circle_Y =  random.randint(0, HEIGHT // TILE - 1) * TILE
+# Startposisjon for eplet
+circle_X = random.randint(0, WIDTH // TILE - 1) * TILE
+circle_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
 
-
-# Simple maze layout (1 = wall, 0 = path)
-
-
-
+# Farger
 BLACK = (0, 0, 0)
 WHITE = (200, 200, 200)
 BG = (30, 30, 30)
+SNAKE_COLOR = (0, 200, 255)
+APPLE_COLOR = (255, 100, 0)
+
+# Font for tekst
+font = pygame.font.Font(None, 36)
 
 
-
-# Game loop
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-    screen.fill(BG)
+def draw_grid():
+    """Tegner rutenettet på skjermen."""
     for x in range(0, WIDTH, TILE):
         for y in range(0, HEIGHT, TILE):
             rect = pygame.Rect(x, y, TILE, TILE)
-            pygame.draw.rect(screen, WHITE, rect, 1)
+            pygame.draw.rect(screen, WHITE, rect, 1)  # Tegn kantlinje for hver rute
 
 
-
-    # Check collision with all snake segments
-    colliding = False
-    for segment in posisjon:
-        slange = pygame.Rect(segment[0], segment[1], square_size, square_size)
-        eple = pygame.Rect(circle_X, circle_Y ,20,20)
-        if slange.colliderect(eple):
-            colliding = True
-            break
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        dir_x = -1
-        dir_y = 0
-    if keys[pygame.K_RIGHT]:
-        dir_x = 1
-        dir_y = 0
-    if keys[pygame.K_UP]:
-        dir_y = -1
-        dir_x = 0
-    if keys[pygame.K_DOWN]:
-        dir_y = 1
-        dir_x = 0
-
-    posisjon[0][0] += dir_x * speed
-    posisjon[0][1] += dir_y * speed
-    # Move each body segment to follow the one before it
-    for i in range(len(posisjon) - 1, 0, -1):
-        posisjon[i][0] = posisjon[i-1][0]
-        posisjon[i][1] = posisjon[i-1][1]
-    # Keep square on screen
-    posisjon[0][0] = max(0, min(WIDTH - square_size, posisjon[0][0]))
-    posisjon[0][1] = max(0, min(HEIGHT - square_size, posisjon[0][1]))
-
-    # Drawing - draw all snake segments
-    for segment in posisjon:
-        pygame.draw.rect(
-            screen,
-            (0, 200, 255),
-            pygame.Rect(segment[0], segment[1], square_size, square_size)
-        )
-
-    pygame.draw.rect( screen, (255, 100, 0),eple)
-
-    # Text
-    if (colliding):
-        circle_X =  random.randint(0, WIDTH // TILE - 1) * TILE
-        circle_Y =  random.randint(0, HEIGHT // TILE - 1) * TILE
-        # Add new segment to snake (duplicate the last segment)
-        posisjon.append(posisjon[-1][:])
-        
-        
-        
+def draw_text(text, x, y, color=WHITE):
+    """Tegner tekst på skjermen på posisjon (x, y)."""
+    surface = font.render(text, True, color)  # Lag tekstsurface
+    screen.blit(surface, (x, y))  # Tegn tekst på skjermen
 
 
+def reset_game():
+    """Setter spillet tilbake til startverdier."""
+    global posisjon, dir_x, dir_y, circle_X, circle_Y
+    posisjon = [[WIDTH // 2, HEIGHT // 2]]  # Plasser slangen midt på skjermen
+    dir_x, dir_y = 0, 0  # Stopp bevegelser
+    circle_X = random.randint(0, WIDTH // TILE - 1) * TILE  # Ny tilfeldig epleposisjon
+    circle_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
 
 
-    pygame.display.flip()
-    clock.tick(10)
+def main_menu():
+    """Viser hovedmenyen før spillet starter."""
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return  # Start spillet
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+
+        screen.fill(BG)  # Fyll bakgrunnen
+        draw_text("HOVEDMENY", WIDTH // 2 - 90, HEIGHT // 2 - 80)
+        draw_text("Trykk ENTER for å starte", WIDTH // 2 - 170, HEIGHT // 2 - 20)
+        draw_text("Trykk ESC for å avslutte", WIDTH // 2 - 170, HEIGHT // 2 + 20)
+
+        pygame.display.flip()  # Oppdater skjermen
+        clock.tick(30)  # Hold menyen til 30 FPS
+
+
+def game_loop():
+    """Hovedspill-løkken som kjører etter menyen."""
+    global dir_x, dir_y, circle_X, circle_Y
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        keys = pygame.key.get_pressed()  # Sjekk tastetrykk for bevegelse
+        if keys[pygame.K_LEFT]:
+            dir_x = -1
+            dir_y = 0
+        elif keys[pygame.K_RIGHT]:
+            dir_x = 1
+            dir_y = 0
+        elif keys[pygame.K_UP]:
+            dir_x = 0
+            dir_y = -1
+        elif keys[pygame.K_DOWN]:
+            dir_x = 0
+            dir_y = 1
+
+        posisjon[0][0] += dir_x * speed  # Flytt hodet i x-retning
+        posisjon[0][1] += dir_y * speed  # Flytt hodet i y-retning
+
+        # Flytt hvert segment til posisjonen til segmentet foran
+        for i in range(len(posisjon) - 1, 0, -1):
+            posisjon[i][0] = posisjon[i - 1][0]
+            posisjon[i][1] = posisjon[i - 1][1]
+
+        # Sørg for at slangen holder seg innenfor skjermen
+        posisjon[0][0] = max(0, min(WIDTH - square_size, posisjon[0][0]))
+        posisjon[0][1] = max(0, min(HEIGHT - square_size, posisjon[0][1]))
+
+        screen.fill(BG)  # Fyll bakgrunnen på nytt
+        draw_grid()  # Tegn rutenettet
+
+        slange = pygame.Rect(posisjon[0][0], posisjon[0][1], square_size, square_size)
+        eple = pygame.Rect(circle_X, circle_Y, square_size, square_size)
+
+        if slange.colliderect(eple):  # Sjekk om slangen treffer eplet
+            circle_X = random.randint(0, WIDTH // TILE - 1) * TILE
+            circle_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
+            posisjon.append(posisjon[-1][:])  # Legg til nytt segment bakerst
+
+        for segment in posisjon:
+            pygame.draw.rect(screen, SNAKE_COLOR, pygame.Rect(segment[0], segment[1], square_size, square_size))
+
+        pygame.draw.rect(screen, APPLE_COLOR, eple)  # Tegn eplet
+
+        pygame.display.flip()  # Oppdater skjermen
+        clock.tick(10)  # Spillet kjører i 10 bilder per sekund
+
+    pygame.quit()
+    sys.exit()
+
+
+if __name__ == "__main__":
+    reset_game()  # Sett spillet til startverdier
+    main_menu()  # Vis menyen først
+    game_loop()  # Start selve spillet
