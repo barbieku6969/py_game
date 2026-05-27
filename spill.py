@@ -28,12 +28,18 @@ speed = TILE  # Flytt én rute per oppdatering
 circle_X = random.randint(0, WIDTH // TILE - 1) * TILE
 circle_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
 
+bomb_X = random.randint(0, WIDTH // TILE - 1) * TILE
+bomb_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
+
 # Farger
 BLACK = (0, 0, 0)
 WHITE = (200, 200, 200)
 BG = (30, 30, 30)
 SNAKE_COLOR = (0, 200, 255)
 APPLE_COLOR = (255, 100, 0)
+BANNANA_COLOR = (255, 255, 0)
+bomb_color = (255, 255, 212)
+
 
 # Font for tekst
 font = pygame.font.Font(None, 36)
@@ -60,6 +66,11 @@ def reset_game():
     dir_x, dir_y = 0, 0  # Stopp bevegelser
     circle_X = random.randint(0, WIDTH // TILE - 1) * TILE  # Ny tilfeldig epleposisjon
     circle_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
+
+    for i in range(3):  
+        bomb_X = random.randint(0, WIDTH // TILE - 1) * TILE  # Ny tilfeldig bombeplassering
+        bomb_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
+          # Vent litt for å unngå at bombene spawner på samme sted
 
 
 def main_menu():
@@ -126,6 +137,23 @@ def game_loop():
 
         slange = pygame.Rect(posisjon[0][0], posisjon[0][1], square_size, square_size)
         eple = pygame.Rect(circle_X, circle_Y, square_size, square_size)
+        BANNANA = pygame.Rect(circle_Y, circle_X, square_size, square_size)
+        bombe = pygame.Rect(bomb_X, bomb_Y, square_size, square_size)
+
+        if slange.colliderect(BANNANA):  # Sjekk om slangen treffer bananen
+            circle_X = random.randint(0, WIDTH // TILE - 1) * TILE
+            circle_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
+            
+            posisjon.append(posisjon[-1][:])  # Legg til nytt segment bakerst
+            posisjon.append(posisjon[-1][:])  # Legg til nytt segment bakerst
+            posisjon.append(posisjon[-1][:])  # Legg til nytt segment bakerst
+
+        if slange.colliderect(bombe):  # Sjekk om slangen treffer bomben
+            draw_text("GAME OVER", WIDTH // 2 - 80, HEIGHT // 2 - 20, color=(255, 0, 0))
+            pygame.display.flip()  # Oppdater skjermen for å vise GAME OVER
+            pygame.time.wait(2000)  # Vent i 2 sekunder før du starter
+            reset_game()  # Start spillet på nytt
+
 
         if slange.colliderect(eple):  # Sjekk om slangen treffer eplet
             circle_X = random.randint(0, WIDTH // TILE - 1) * TILE
@@ -136,6 +164,8 @@ def game_loop():
             pygame.draw.rect(screen, SNAKE_COLOR, pygame.Rect(segment[0], segment[1], square_size, square_size))
 
         pygame.draw.rect(screen, APPLE_COLOR, eple)  # Tegn eplet
+        pygame.draw.rect(screen, BANNANA_COLOR, BANNANA)  # Tegn bananen
+        pygame.draw.rect(screen, bomb_color, bombe)  # Tegn bomben
 
         pygame.display.flip()  # Oppdater skjermen
         clock.tick(10)  # Spillet kjører i 10 bilder per sekund
