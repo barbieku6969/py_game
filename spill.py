@@ -39,10 +39,13 @@ SNAKE_COLOR = (0, 200, 255)
 APPLE_COLOR = (255, 100, 0)
 BANNANA_COLOR = (255, 255, 0)
 bomb_color = (255, 255, 212)
+font = pygame.font.SysFont(None, 36)
 
 
-# Font for tekst
+
+# Font for tekstx|
 font = pygame.font.Font(None, 36)
+myFont = pygame.font.SysFont("Times New Roman", 18)
 
 
 def draw_grid():
@@ -61,16 +64,16 @@ def draw_text(text, x, y, color=WHITE):
 
 def reset_game():
     """Setter spillet tilbake til startverdier."""
+    score = 0  # Tilbakestill poengsum
     global posisjon, dir_x, dir_y, circle_X, circle_Y
     posisjon = [[WIDTH // 2, HEIGHT // 2]]  # Plasser slangen midt på skjermen
     dir_x, dir_y = 0, 0  # Stopp bevegelser
     circle_X = random.randint(0, WIDTH // TILE - 1) * TILE  # Ny tilfeldig epleposisjon
     circle_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
-
-    for i in range(3):  
-        bomb_X = random.randint(0, WIDTH // TILE - 1) * TILE  # Ny tilfeldig bombeplassering
-        bomb_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
-          # Vent litt for å unngå at bombene spawner på samme sted
+    bomb_X = random.randint(0, WIDTH // TILE - 1) * TILE
+    bomb_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
+    
+    black = (0, 0, 0)  # Farge for tekst
 
 
 def main_menu():
@@ -98,13 +101,23 @@ def main_menu():
 
 def game_loop():
     """Hovedspill-løkken som kjører etter menyen."""
-    global dir_x, dir_y, circle_X, circle_Y
+    global dir_x, dir_y, circle_X, circle_Y, bomb_X, bomb_Y
     running = True
+    move_bomb = 0
+    score = 0
+   
+
+   
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+
+         
+        
+       
 
         keys = pygame.key.get_pressed()  # Sjekk tastetrykk for bevegelse
         if keys[pygame.K_LEFT]:
@@ -119,6 +132,13 @@ def game_loop():
         elif keys[pygame.K_DOWN]:
             dir_x = 0
             dir_y = 1
+        move_bomb += 1
+        if move_bomb == 60:
+            move_bomb = 0
+            for i in range(3):  
+                bomb_X = random.randint(0, WIDTH // TILE - 1) * TILE  # Ny tilfeldig bombeplassering
+                bomb_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
+                # Vent litt for å unngå at bombene spawner på samme sted
 
         posisjon[0][0] += dir_x * speed  # Flytt hodet i x-retning
         posisjon[0][1] += dir_y * speed  # Flytt hodet i y-retning
@@ -147,18 +167,25 @@ def game_loop():
             posisjon.append(posisjon[-1][:])  # Legg til nytt segment bakerst
             posisjon.append(posisjon[-1][:])  # Legg til nytt segment bakerst
             posisjon.append(posisjon[-1][:])  # Legg til nytt segment bakerst
+            score += 3
+        if score >= 100:
+            draw_text("You win!", WIDTH // 2 - 80, HEIGHT // 2 - 20, color=(0, 255, 0))
+            pygame.display.flip()  # Oppdater skjermen for å vise You win!
+            pygame.time.wait(2000)  # Vent i 2 sekunder før du starter
+            reset_game()  # Start spillet på nytt
 
         if slange.colliderect(bombe):  # Sjekk om slangen treffer bomben
             draw_text("GAME OVER", WIDTH // 2 - 80, HEIGHT // 2 - 20, color=(255, 0, 0))
             pygame.display.flip()  # Oppdater skjermen for å vise GAME OVER
             pygame.time.wait(2000)  # Vent i 2 sekunder før du starter
             reset_game()  # Start spillet på nytt
-
+            score = 0  # Tilbakestill poengsum
 
         if slange.colliderect(eple):  # Sjekk om slangen treffer eplet
             circle_X = random.randint(0, WIDTH // TILE - 1) * TILE
             circle_Y = random.randint(0, HEIGHT // TILE - 1) * TILE
             posisjon.append(posisjon[-1][:])  # Legg til nytt segment bakerst
+            score += 1 
 
         for segment in posisjon:
             pygame.draw.rect(screen, SNAKE_COLOR, pygame.Rect(segment[0], segment[1], square_size, square_size))
@@ -166,7 +193,11 @@ def game_loop():
         pygame.draw.rect(screen, APPLE_COLOR, eple)  # Tegn eplet
         pygame.draw.rect(screen, BANNANA_COLOR, BANNANA)  # Tegn bananen
         pygame.draw.rect(screen, bomb_color, bombe)  # Tegn bomben
-
+        displayScore = myFont.render("Score: " + str(score), 1, (255, 255, 255))
+        displayScoreRect = displayScore.get_rect()
+        displayScoreRect.topleft = (10, 10)
+        screen.blit(displayScore, displayScoreRect)  # Vis poengsummen
+        
         pygame.display.flip()  # Oppdater skjermen
         clock.tick(10)  # Spillet kjører i 10 bilder per sekund
 
